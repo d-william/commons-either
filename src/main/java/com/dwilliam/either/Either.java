@@ -13,7 +13,7 @@ import java.util.function.Predicate;
  * @param <L> The type of the left side
  * @param <R> The type of the right side
  */
-public interface Either<L,R> {
+public sealed interface Either<L,R> {
 
     /**
      * Returns the value from this {@code Either} if it's a {@code Left}
@@ -38,18 +38,14 @@ public interface Either<L,R> {
      *
      * @return {@code true} if this {@code Either} is a {@code Left}, {@code false} otherwise
      */
-    default boolean isLeft() {
-        return Either.Left.class.equals(getClass());
-    }
+    boolean isLeft();
 
     /**
      * Returns {@code true} if this {@code Either} is a {@code Right}, {@code false} otherwise.
      *
      * @return {@code true} if this {@code Either} is a {@code Right}, {@code false} otherwise
      */
-    default boolean isRight() {
-        return Either.Right.class.equals(getClass());
-    }
+    boolean isRight();
 
     /**
      * Returns the value from this {@code Either} if it's a {@code Left}.
@@ -442,28 +438,7 @@ public interface Either<L,R> {
      * @param <L> The type of the left side
      * @param <R> The type of the right side
      */
-    class Left<L,R> implements Either<L, R> {
-
-        public final L left;
-
-        /**
-         * Constructs a new {@code Left}.
-         *
-         * @param left the value to describe
-         */
-        public Left(L left) {
-            this.left = left;
-        }
-
-        /**
-         * Returns the value from this {@code Left}
-         *
-         * @return the value containing in this {@code Left}
-         */
-        @Override
-        public L left() {
-            return this.left;
-        }
+    record Left<L,R>(L left) implements Either<L, R> {
 
         /**
          * Throws {@code NoSuchElementException}
@@ -473,6 +448,22 @@ public interface Either<L,R> {
         @Override
         public R right() {
             throw new NoSuchElementException("Not a Right");
+        }
+
+        /**
+         * @return true
+         */
+        @Override
+        public boolean isLeft() {
+            return true;
+        }
+
+        /**
+         * @return false
+         */
+        @Override
+        public boolean isRight() {
+            return false;
         }
 
         /**
@@ -490,9 +481,10 @@ public interface Either<L,R> {
         @Override
         public boolean equals(Object obj) {
             if (this == obj) return true;
-            if (obj == null || getClass() != obj.getClass()) return false;
-            Left<?, ?> other = (Left<?, ?>) obj;
-            return Objects.equals(left, other.left);
+            return switch (obj) {
+                case Left<?, ?> l -> Objects.equals(left, l.left);
+                case null, default -> false;
+            };
         }
 
         /**
@@ -524,18 +516,7 @@ public interface Either<L,R> {
      * @param <L> The type of the left side
      * @param <R> The type of the right side
      */
-    class Right<L,R> implements Either<L, R> {
-
-        public final R right;
-
-        /**
-         * Constructs a new {@code Right}.
-         *
-         * @param right the value to describe
-         */
-        public Right(R right) {
-            this.right = right;
-        }
+    record Right<L, R>(R right) implements Either<L, R> {
 
         /**
          * Throws {@code NoSuchElementException}
@@ -548,13 +529,19 @@ public interface Either<L,R> {
         }
 
         /**
-         * Returns the value from this {@code Right}
-         *
-         * @return the value containing in this {@code Right}
+         * @return false
          */
         @Override
-        public R right() {
-            return this.right;
+        public boolean isLeft() {
+            return false;
+        }
+
+        /**
+         * @return true
+         */
+        @Override
+        public boolean isRight() {
+            return true;
         }
 
         /**
@@ -567,14 +554,15 @@ public interface Either<L,R> {
          *
          * @param obj an object to be tested for equality
          * @return {@code true} if the other object is "equal to" this object,
-         *         otherwise {@code false}
+         * otherwise {@code false}
          */
         @Override
         public boolean equals(Object obj) {
             if (this == obj) return true;
-            if (obj == null || getClass() != obj.getClass()) return false;
-            Right<?, ?> other = (Right<?, ?>) obj;
-            return Objects.equals(right, other.right);
+            return switch (obj) {
+                case Right<?, ?> r -> Objects.equals(right, r.right);
+                case null, default -> false;
+            };
         }
 
         /**
